@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CAST PICK - 가장 만족스러운 캐스팅 조합 탐색기</title>
+  <title>CAST PICK - 여신님이 보고 계셔 최적 캐스팅 탐색기</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -26,7 +26,7 @@
       padding: 20px;
       line-height: 1.5;
     }
-    .container { max-width: 1050px; margin: 0 auto; }
+    .container { max-width: 1120px; margin: 0 auto; }
     header {
       display: flex;
       justify-content: space-between;
@@ -38,8 +38,8 @@
     header h1 { margin: 0; font-size: 1.8rem; letter-spacing: -0.5px; }
     header p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
     .header-actions { display: flex; gap: 8px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+    .grid-2 { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 20px; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
     .card {
       background: var(--card);
       border-radius: 14px;
@@ -82,7 +82,7 @@
     button:hover { background: var(--primary-hover); }
     button.secondary { background: #e2e8f0; color: #1e293b; }
     button.secondary:hover { background: #cbd5e1; }
-    button.danger { background: #fee2e2; color: var(--danger); padding: 5px 10px; font-size: 0.8rem; }
+    button.danger { background: #fee2e2; color: var(--danger); padding: 4px 8px; font-size: 0.78rem; }
     button.danger:hover { background: #fecaca; }
     button.run-btn {
       width: 100%;
@@ -91,31 +91,49 @@
       margin-bottom: 24px;
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .role-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+    .role-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
     .actor-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px dashed var(--border);
+      gap: 8px;
+      padding: 5px 0;
     }
-    .actor-name { width: 80px; font-weight: 700; }
-    .actor-score { width: 42px; text-align: right; font-weight: 700; color: var(--primary); }
+    .actor-name { width: 58px; font-weight: 600; font-size: 0.9rem; }
+    .actor-score { width: 38px; text-align: right; font-weight: 700; color: var(--primary); font-size: 0.88rem; }
     .tag {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: var(--accent);
       color: var(--primary);
-      padding: 4px 10px;
+      padding: 5px 11px;
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
       margin: 4px 4px 0 0;
     }
     .tag button { background: none; color: var(--primary); padding: 0 2px; font-size: 1rem; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; }
-    th { color: var(--muted); font-weight: 600; background: #f8fafc; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 9px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; background: #f8fafc; position: sticky; top: 0; }
     .rank-card {
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -137,15 +155,15 @@
       font-weight: 700;
     }
     .show-pill {
-      display: inline-block;
+      display: block;
       background: #fff;
       border: 1px solid var(--border);
-      padding: 4px 10px;
+      padding: 6px 10px;
       border-radius: 6px;
-      margin: 3px 4px 3px 0;
+      margin: 5px 0;
       font-size: 0.85rem;
     }
-    .chart-box { position: relative; height: 260px; width: 100%; }
+    .chart-box { position: relative; height: 280px; width: 100%; }
   </style>
 </head>
 <body>
@@ -157,7 +175,7 @@
       <p>정해진 관극 횟수 안에서, 가장 만족스러운 캐스팅 조합을.</p>
     </div>
     <div class="header-actions">
-      <button class="secondary" onclick="resetToSample()">샘플 데이터 초기화</button>
+      <button class="secondary" onclick="resetToSample()">일정 및 기본값 초기화</button>
     </div>
   </header>
 
@@ -167,11 +185,11 @@
     <div class="form-row">
       <div>
         <label>작품명</label>
-        <input type="text" id="showTitle" value="이끼숲" onchange="saveState()" />
+        <input type="text" id="showTitle" value="여신님이 보고 계셔" onchange="saveState()" />
       </div>
       <div>
         <label>목표 관극 횟수 (회)</label>
-        <input type="number" id="targetCount" value="3" min="1" max="15" onchange="saveState()" />
+        <input type="number" id="targetCount" value="3" min="1" max="10" onchange="saveState()" />
       </div>
       <div>
         <label>중복 배우 페널티 (회당 감점)</label>
@@ -187,57 +205,56 @@
   </div>
 
   <div class="grid-2">
-    <!-- 2. 배우별 선호도 -->
+    <!-- 2. 배우별 선호도 (배역별 그룹핑) -->
     <div class="card">
-      <h2>2. 배우별 선호도 (1~10점)</h2>
-      <div class="form-row" style="grid-template-columns: 1fr auto;">
-        <input type="text" id="newActorName" placeholder="새 배우 이름 (예: 홍기범)" />
-        <button onclick="addActor()">+ 배우 추가</button>
-      </div>
-      <div id="actorList"></div>
+      <h2>2. 배역 및 배우별 선호도 (1~10점)</h2>
+      <div class="role-grid" id="actorList"></div>
     </div>
 
     <!-- 3. 배우 조합 가산점 -->
     <div class="card">
-      <h2>3. 배우 조합 선호도 (-5 ~ +10점)</h2>
-      <div class="form-row" style="grid-template-columns: 1fr 1fr 80px auto;">
+      <h2>3. 배우 조합 선호도 (-10 ~ +20점)</h2>
+      <p style="font-size:0.84rem; color:var(--muted); margin-top:0;">
+        특정 페어가 함께 출연하는 회차에 추가 점수를 부여합니다.
+      </p>
+      <div class="form-row" style="grid-template-columns: 1fr 1fr 75px auto;">
         <select id="pairActor1"></select>
         <select id="pairActor2"></select>
         <input type="number" id="pairBonusScore" value="5" min="-10" max="20" />
         <button onclick="addPairBonus()">+ 추가</button>
       </div>
-      <div id="pairList"></div>
+      <div id="pairList" style="margin-top:10px;"></div>
     </div>
   </div>
 
   <!-- 4. 공연 회차 등록 -->
   <div class="card">
     <h2>
-      <span>4. 공연 회차 및 캐스팅 스케줄</span>
+      <span>4. 공연 회차 및 캐스팅 스케줄 (11/24 ~ 01/03)</span>
       <span style="font-size:0.85rem; color:var(--muted); font-weight:normal;" id="showCountLabel"></span>
     </h2>
-    <div class="form-row" style="grid-template-columns: 140px 1fr auto;">
+    <div class="form-row" style="grid-template-columns: 160px 1fr auto;">
       <div>
-        <label>날짜</label>
-        <input type="text" id="newShowDate" placeholder="11/25" />
+        <label>날짜 / 시간</label>
+        <input type="text" id="newShowDate" placeholder="01/04 (월) 20:00" />
       </div>
       <div>
         <label>출연 배우 (쉼표로 구분)</label>
-        <input type="text" id="newShowCast" placeholder="A, B" />
+        <input type="text" id="newShowCast" placeholder="강기둥, 홍기범, 장지후, 임진섭, 김성현, 서동진, 강지혜" />
       </div>
       <div style="display:flex; align-items:flex-end;">
-        <button onclick="addShow()" style="width:100%;">+ 회차 등록</button>
+        <button onclick="addShow()" style="width:100%;">+ 회차 추가</button>
       </div>
     </div>
 
-    <div style="max-height: 280px; overflow-y: auto; margin-top: 10px;">
+    <div style="max-height: 320px; overflow-y: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px;">
       <table>
         <thead>
           <tr>
-            <th>날짜</th>
-            <th>캐스팅</th>
-            <th>기본 회차 점수</th>
-            <th>관리</th>
+            <th style="width:140px;">날짜 / 시간</th>
+            <th>캐스팅 (영범 · 순호 · 창섭 · 석구 · 동현 · 주화 · 여신)</th>
+            <th style="width:105px;">기본 회차 점수</th>
+            <th style="width:65px;">관리</th>
           </tr>
         </thead>
         <tbody id="showTableBody"></tbody>
@@ -263,7 +280,7 @@
           <canvas id="countChart"></canvas>
         </div>
         <p style="font-size:0.85rem; color:var(--muted); margin-top:10px;">
-          관극 횟수를 1회부터 최대 6회까지 늘렸을 때 달성 가능한 최대 만족도 변화를 보여줍니다.
+          관극 횟수를 1회부터 최대 5회까지 늘렸을 때 달성 가능한 최대 만족도 변화를 보여줍니다.
         </p>
       </div>
     </div>
@@ -288,31 +305,109 @@
 </div>
 
 <script>
-  const STORAGE_KEY = "cast_pick_no_budget_v1";
+  const STORAGE_KEY = "cast_pick_goddess_v1";
+
+  const roleGroups = [
+    { role: "한영범", actors: ["조성윤", "유현석", "강기둥", "정욱진"] },
+    { role: "류순호", actors: ["김리현", "류동휘", "홍기범"] },
+    { role: "이창섭", actors: ["양승리", "장지후", "김세환"] },
+    { role: "신석구", actors: ["임준혁", "임진섭", "곽다인"] },
+    { role: "조동현", actors: ["황두현", "김대웅", "김성현"] },
+    { role: "변주화", actors: ["서동진", "김재민", "장재웅"] },
+    { role: "여신님", actors: ["한보라", "강지혜", "최서연"] }
+  ];
+
+  // 이미지 4장 전체 출연 일정 (총 57회차)
+  const rawSchedule = [
+    // 1페이지 (11/24 ~ 12/04)
+    ["11/24 (화) 20:00", ["조성윤", "김리현", "양승리", "임준혁", "황두현", "서동진", "한보라"]],
+    ["11/25 (수) 20:00", ["유현석", "류동휘", "장지후", "임진섭", "김대웅", "김재민", "강지혜"]],
+    ["11/26 (목) 20:00", ["강기둥", "홍기범", "김세환", "곽다인", "김성현", "장재웅", "최서연"]],
+    ["11/27 (금) 20:00", ["조성윤", "류동휘", "장지후", "임진섭", "김대웅", "김재민", "한보라"]],
+    ["11/28 (토) 14:00", ["강기둥", "김리현", "양승리", "곽다인", "김성현", "서동진", "강지혜"]],
+    ["11/28 (토) 18:00", ["강기둥", "김리현", "양승리", "곽다인", "김성현", "서동진", "강지혜"]],
+    ["11/29 (일) 14:00", ["유현석", "홍기범", "장지후", "임준혁", "황두현", "장재웅", "최서연"]],
+    ["11/29 (일) 18:00", ["유현석", "홍기범", "김세환", "임준혁", "황두현", "장재웅", "최서연"]],
+    ["12/01 (화) 20:00", ["정욱진", "홍기범", "장지후", "임준혁", "황두현", "서동진", "최서연"]],
+    ["12/02 (수) 16:00", ["강기둥", "류동휘", "양승리", "임진섭", "김대웅", "장재웅", "강지혜"]],
+    ["12/02 (수) 20:00", ["유현석", "류동휘", "양승리", "곽다인", "김대웅", "장재웅", "강지혜"]],
+    ["12/03 (목) 20:00", ["조성윤", "김리현", "김세환", "임준혁", "김성현", "김재민", "최서연"]],
+    ["12/04 (금) 16:00", ["정욱진", "홍기범", "장지후", "곽다인", "황두현", "서동진", "한보라"]],
+    ["12/04 (금) 20:00", ["정욱진", "홍기범", "장지후", "임진섭", "황두현", "장재웅", "한보라"]],
+
+    // 2페이지 (12/05 ~ 12/13)
+    ["12/05 (토) 14:00", ["강기둥", "김리현", "김세환", "임준혁", "김대웅", "김재민", "강지혜"]],
+    ["12/05 (토) 18:00", ["강기둥", "김리현", "김세환", "임진섭", "김대웅", "김재민", "강지혜"]],
+    ["12/06 (일) 14:00", ["정욱진", "류동휘", "양승리", "곽다인", "김성현", "서동진", "최서연"]],
+    ["12/06 (일) 18:00", ["유현석", "류동휘", "양승리", "곽다인", "김성현", "서동진", "최서연"]],
+    ["12/08 (화) 20:00", ["유현석", "홍기범", "장지후", "곽다인", "김대웅", "김재민", "최서연"]],
+    ["12/09 (수) 16:00", ["정욱진", "김리현", "양승리", "임진섭", "김성현", "장재웅", "한보라"]],
+    ["12/09 (수) 20:00", ["강기둥", "김리현", "양승리", "임진섭", "김성현", "장재웅", "한보라"]],
+    ["12/10 (목) 20:00", ["조성윤", "류동휘", "장지후", "임준혁", "황두현", "서동진", "최서연"]],
+    ["12/11 (금) 16:00", ["유현석", "홍기범", "양승리", "곽다인", "김대웅", "김재민", "강지혜"]],
+    ["12/11 (금) 20:00", ["정욱진", "홍기범", "양승리", "곽다인", "김대웅", "장재웅", "강지혜"]],
+    ["12/12 (토) 14:00", ["강기둥", "류동휘", "장지후", "임준혁", "김성현", "서동진", "최서연"]],
+    ["12/12 (토) 18:00", ["강기둥", "류동휘", "장지후", "임준혁", "김성현", "서동진", "최서연"]],
+    ["12/13 (일) 14:00", ["유현석", "김리현", "양승리", "임진섭", "황두현", "김재민", "강지혜"]],
+    ["12/13 (일) 18:00", ["유현석", "김리현", "장지후", "임진섭", "황두현", "김재민", "강지혜"]],
+
+    // 3페이지 (12/15 ~ 12/25 낮)
+    ["12/15 (화) 20:00", ["유현석", "류동휘", "김세환", "임진섭", "김성현", "장재웅", "최서연"]],
+    ["12/16 (수) 16:00", ["강기둥", "김리현", "양승리", "임준혁", "김대웅", "서동진", "한보라"]],
+    ["12/16 (수) 20:00", ["강기둥", "홍기범", "양승리", "임준혁", "김대웅", "서동진", "한보라"]],
+    ["12/17 (목) 20:00", ["유현석", "류동휘", "장지후", "곽다인", "황두현", "김재민", "강지혜"]],
+    ["12/18 (금) 16:00", ["정욱진", "김리현", "김세환", "임진섭", "김성현", "장재웅", "최서연"]],
+    ["12/18 (금) 20:00", ["정욱진", "김리현", "양승리", "임진섭", "김성현", "장재웅", "최서연"]],
+    ["12/19 (토) 14:00", ["조성윤", "홍기범", "김세환", "곽다인", "김대웅", "서동진", "강지혜"]],
+    ["12/19 (토) 18:00", ["유현석", "김리현", "김세환", "곽다인", "김대웅", "서동진", "강지혜"]],
+    ["12/20 (일) 14:00", ["정욱진", "류동휘", "장지후", "임준혁", "황두현", "김재민", "한보라"]],
+    ["12/20 (일) 18:00", ["강기둥", "류동휘", "장지후", "임진섭", "황두현", "김재민", "한보라"]],
+    ["12/22 (화) 20:00", ["유현석", "김리현", "양승리", "임준혁", "김대웅", "서동진", "강지혜"]],
+    ["12/23 (수) 16:00", ["조성윤", "홍기범", "장지후", "곽다인", "황두현", "장재웅", "최서연"]],
+    ["12/23 (수) 20:00", ["정욱진", "김리현", "장지후", "임진섭", "황두현", "장재웅", "최서연"]],
+    ["12/24 (목) 20:00", ["유현석", "류동휘", "양승리", "임진섭", "김성현", "김재민", "한보라"]],
+    ["12/25 (금) 14:00", ["조성윤", "홍기범", "김세환", "임준혁", "김대웅", "서동진", "강지혜"]],
+
+    // 4페이지 (12/25 밤 ~ 01/03)
+    ["12/25 (금) 18:00", ["정욱진", "홍기범", "김세환", "곽다인", "김대웅", "서동진", "강지혜"]],
+    ["12/26 (토) 14:00", ["강기둥", "김리현", "장지후", "임진섭", "황두현", "장재웅", "최서연"]],
+    ["12/26 (토) 18:00", ["강기둥", "김리현", "장지후", "임진섭", "황두현", "장재웅", "최서연"]],
+    ["12/27 (일) 14:00", ["정욱진", "류동휘", "양승리", "곽다인", "김성현", "김재민", "강지혜"]],
+    ["12/27 (일) 18:00", ["유현석", "류동휘", "양승리", "임준혁", "김성현", "김재민", "한보라"]],
+    ["12/29 (화) 20:00", ["유현석", "류동휘", "김세환", "곽다인", "황두현", "김재민", "최서연"]],
+    ["12/30 (수) 16:00", ["강기둥", "김리현", "장지후", "임준혁", "김대웅", "서동진", "한보라"]],
+    ["12/30 (수) 20:00", ["강기둥", "홍기범", "장지후", "임준혁", "김대웅", "서동진", "한보라"]],
+    ["12/31 (목) 20:00", ["유현석", "류동휘", "양승리", "임진섭", "김성현", "장재웅", "강지혜"]],
+    ["01/01 (금) 14:00", ["정욱진", "김리현", "김세환", "곽다인", "황두현", "김재민", "최서연"]],
+    ["01/01 (금) 18:00", ["정욱진", "홍기범", "김세환", "곽다인", "황두현", "김재민", "최서연"]],
+    ["01/02 (토) 14:00", ["유현석", "류동휘", "양승리", "임준혁", "김대웅", "장재웅", "한보라"]],
+    ["01/02 (토) 18:00", ["조성윤", "류동휘", "양승리", "곽다인", "김대웅", "장재웅", "한보라"]],
+    ["01/03 (일) 14:00", ["강기둥", "홍기범", "장지후", "임진섭", "김성현", "서동진", "강지혜"]],
+    ["01/03 (일) 18:00", ["강기둥", "김리현", "장지후", "임진섭", "김성현", "서동진", "강지혜"]]
+  ];
+
+  function createInitialActors() {
+    const map = {};
+    roleGroups.forEach(group => {
+      group.actors.forEach(actor => {
+        map[actor] = 5; // 기본 선호도 5점 시작
+      });
+    });
+    return map;
+  }
 
   const defaultState = {
-    title: "이끼숲",
+    title: "여신님이 보고 계셔",
     targetCount: 3,
     repPenalty: 3,
     requiredActor: "",
-    actors: { "A": 10, "B": 9, "C": 7, "D": 5 },
-    pairBonuses: [
-      { actors: ["A", "B"], bonus: 5 },
-      { actors: ["A", "C"], bonus: 2 },
-      { actors: ["B", "D"], bonus: 3 }
-    ],
-    shows: [
-      { id: 1, date: "11/15", cast: ["A", "C"] },
-      { id: 2, date: "11/16", cast: ["B", "D"] },
-      { id: 3, date: "11/17", cast: ["A", "B"] },
-      { id: 4, date: "11/18", cast: ["C", "D"] },
-      { id: 5, date: "11/19", cast: ["A", "D"] },
-      { id: 6, date: "11/20", cast: ["B", "C"] },
-      { id: 7, date: "11/21", cast: ["A", "B"] },
-      { id: 8, date: "11/22", cast: ["A", "C"] },
-      { id: 9, date: "11/23", cast: ["B", "D"] },
-      { id: 10, date: "11/24", cast: ["A", "B"] }
-    ]
+    actors: createInitialActors(),
+    pairBonuses: [],
+    shows: rawSchedule.map((item, index) => ({
+      id: index + 1,
+      date: item[0],
+      cast: item[1]
+    }))
   };
 
   let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(defaultState);
@@ -327,13 +422,13 @@
   }
 
   function resetToSample() {
-    if (!confirm("모든 입력 데이터를 초기 샘플 상태로 되돌릴까요?")) return;
+    if (!confirm("모든 선호도 점수와 일정을 '여신님이 보고 계셔' 초기 상태로 되돌릴까요?")) return;
     state = structuredClone(defaultState);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     renderAll();
   }
 
-  // 개별 회차 기본 점수 계산 (배우 선호도 합 + 조합 보너스)
+  // 개별 회차 기본 점수 계산 (출연 배우 7명 선호도 합 + 조합 보너스)
   function calcSingleShowScore(show) {
     let score = 0;
     show.cast.forEach(a => {
@@ -352,35 +447,52 @@
     document.getElementById("targetCount").value = state.targetCount;
     document.getElementById("repPenalty").value = state.repPenalty;
 
-    const actorNames = Object.keys(state.actors);
+    const allActorNames = Object.keys(state.actors);
 
+    // 필수 관람 배우 & 조합 셀렉트 박스 (배역별 optgroup 구성)
     const reqSelect = document.getElementById("requiredActor");
     const p1Select = document.getElementById("pairActor1");
     const p2Select = document.getElementById("pairActor2");
 
-    reqSelect.innerHTML = `<option value="">제한 없음</option>` +
-      actorNames.map(a => `<option value="${a}" ${state.requiredActor === a ? "selected" : ""}>${a}</option>`).join("");
-    p1Select.innerHTML = actorNames.map(a => `<option value="${a}">${a}</option>`).join("");
-    p2Select.innerHTML = actorNames.map((a, idx) => `<option value="${a}" ${idx === 1 ? "selected" : ""}>${a}</option>`).join("");
+    const groupedOptions = roleGroups.map(g => `
+      <optgroup label="${g.role}">
+        ${g.actors.map(a => `<option value="${a}">${a}</option>`).join("")}
+      </optgroup>
+    `).join("");
 
+    reqSelect.innerHTML = `<option value="">제한 없음</option>` + groupedOptions;
+    reqSelect.value = state.requiredActor;
+
+    p1Select.innerHTML = groupedOptions;
+    p2Select.innerHTML = groupedOptions;
+    if (allActorNames.length > 4) p2Select.value = allActorNames[4];
+
+    // 배역별 배우 선호도 슬라이더 렌더링
     const actorList = document.getElementById("actorList");
-    actorList.innerHTML = actorNames.map(name => `
-      <div class="actor-item">
-        <span class="actor-name">${name}</span>
-        <input type="range" min="1" max="10" value="${state.actors[name]}"
-          oninput="updateActorScore('${name}', this.value)" />
-        <span class="actor-score" id="score_${name}">${state.actors[name]}점</span>
-        <button class="danger" onclick="removeActor('${name}')">삭제</button>
+    actorList.innerHTML = roleGroups.map(g => `
+      <div class="role-box">
+        <div class="role-title">${g.role}</div>
+        ${g.actors.map(name => `
+          <div class="actor-item">
+            <span class="actor-name">${name}</span>
+            <input type="range" min="1" max="10" value="${state.actors[name] ?? 5}"
+              oninput="updateActorScore('${name}', this.value)" />
+            <span class="actor-score" id="score_${name}">${state.actors[name] ?? 5}점</span>
+          </div>
+        `).join("")}
       </div>
     `).join("");
 
+    // 조합 가산점 태그 렌더링
     const pairList = document.getElementById("pairList");
-    pairList.innerHTML = state.pairBonuses.map((pb, idx) => `
-      <span class="tag">
-        ${pb.actors.join(" + ")} (${pb.bonus >= 0 ? "+" + pb.bonus : pb.bonus}점)
-        <button onclick="removePairBonus(${idx})">×</button>
-      </span>
-    `).join("");
+    pairList.innerHTML = state.pairBonuses.length === 0
+      ? `<span style="font-size:0.84rem; color:var(--muted);">등록된 조합 가산점이 없습니다.</span>`
+      : state.pairBonuses.map((pb, idx) => `
+        <span class="tag">
+          ${pb.actors.join(" + ")} (${pb.bonus >= 0 ? "+" + pb.bonus : pb.bonus}점)
+          <button onclick="removePairBonus(${idx})">×</button>
+        </span>
+      `).join("");
 
     renderShowTable();
   }
@@ -391,7 +503,7 @@
     tbody.innerHTML = state.shows.map(s => `
       <tr>
         <td><strong>${s.date}</strong></td>
-        <td>${s.cast.join(" + ")}</td>
+        <td>${s.cast.join(" · ")}</td>
         <td><strong>${calcSingleShowScore(s)}점</strong></td>
         <td><button class="danger" onclick="removeShow(${s.id})">삭제</button></td>
       </tr>
@@ -403,24 +515,6 @@
     document.getElementById(`score_${name}`).textContent = `${val}점`;
     saveState();
     renderShowTable();
-  }
-
-  function addActor() {
-    const input = document.getElementById("newActorName");
-    const name = input.value.trim();
-    if (!name || state.actors[name] !== undefined) return;
-    state.actors[name] = 8;
-    input.value = "";
-    saveState();
-    renderAll();
-  }
-
-  function removeActor(name) {
-    delete state.actors[name];
-    state.pairBonuses = state.pairBonuses.filter(pb => !pb.actors.includes(name));
-    if (state.requiredActor === name) state.requiredActor = "";
-    saveState();
-    renderAll();
   }
 
   function addPairBonus() {
@@ -448,7 +542,7 @@
 
     const cast = castRaw.split(",").map(s => s.trim()).filter(Boolean);
     cast.forEach(actor => {
-      if (state.actors[actor] === undefined) state.actors[actor] = 7;
+      if (state.actors[actor] === undefined) state.actors[actor] = 5;
     });
 
     const newId = state.shows.length ? Math.max(...state.shows.map(s => s.id)) + 1 : 1;
@@ -517,7 +611,6 @@
         }
         return;
       }
-      // 남은 회차 수가 부족하면 조기 종료 (가지치기)
       if (idx >= shows.length || chosen.length + (shows.length - idx) < k) return;
 
       chosen.push(shows[idx]);
@@ -569,7 +662,6 @@
     const t0 = performance.now();
     let ops = 0;
 
-    // dp[c] = c회 선택 시 독립 점수 합 최대 조합
     const dp = Array(k + 1).fill(null);
     dp[0] = { score: 0, comb: [] };
 
@@ -636,7 +728,6 @@
 
     document.getElementById("resultsSection").style.display = "block";
 
-    // TOP 3 렌더링
     const topContainer = document.getElementById("topCombinations");
     if (bt.results.length === 0) {
       topContainer.innerHTML = `<p style="color:var(--danger); font-weight:600;">조건(관극 횟수·필수배우)을 만족하는 조합이 없습니다.</p>`;
@@ -651,16 +742,20 @@
             </span>
           </div>
           <div>
-            ${item.comb.map(s => `<span class="show-pill"><strong>${s.date}</strong> · ${s.cast.join(" + ")} (${calcSingleShowScore(s)}점)</span>`).join("")}
+            ${item.comb.map(s => `
+              <div class="show-pill">
+                <strong>${s.date}</strong> (${calcSingleShowScore(s)}점)<br/>
+                <span style="color:#334155;">${s.cast.join(" · ")}</span>
+              </div>
+            `).join("")}
           </div>
         </div>
       `).join("");
     }
 
-    // 알고리즘 비교 표 렌더링
     const rows = [
       { name: "백트래킹 (가지치기)", data: bt.results[0], ops: bt.ops, ms: bt.ms, note: "중복 페널티 및 필수 배우 제약 100% 반영 최적해" },
-      { name: "완전탐색 (Brute Force)", data: bf.best, ops: bf.ops, ms: bf.ms, note: "모든 조합 전수 조사 (기준 정답)" },
+      { name: "완전탐색 (Brute Force)", data: bf.best, ops: bf.ops, ms: bf.ms, note: "57회차 중 K개 조합 전수 조사 (기준 정답)" },
       { name: "동적 계획법 (DP)", data: dp.best, ops: dp.ops, ms: dp.ms, note: "회차 독립 가정 최적화 (중복 페널티·필수 조건 시 오차)" },
       { name: "그리디 (고득점순)", data: gr.best, ops: gr.ops, ms: gr.ms, note: "단순 고득점 회차 선택 (중복 감점 고려 불가)" }
     ];
@@ -682,7 +777,7 @@
   // 관극 횟수 변화 민감도 분석 차트
   function renderCountChart() {
     const { shows, requiredActor, repPenalty } = state;
-    const maxK = Math.min(6, shows.length);
+    const maxK = Math.min(5, shows.length);
     const labels = [];
     const scores = [];
 
@@ -719,7 +814,6 @@
     });
   }
 
-  // 초기 렌더링
   renderAll();
 </script>
 </body>
