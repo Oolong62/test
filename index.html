@@ -982,7 +982,7 @@ $("btnSaveImg").onclick = async () => {
     ctx.font = "bold 17px sans-serif";
     ctx.fillText(`SPACE SKY Visitor Card #${b.id}`, pad + 22, y + 34);
 
-    const statusText = b.ended ? "완료/종료" : "진행 중";
+    const statusText = b.ended ? "종료" : "진행 중";
     ctx.font = "bold 12px sans-serif";
     const badgeW = 68;
     roundRect(ctx, W - pad - 22 - badgeW, y + 17, badgeW, 24, 12);
