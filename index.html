@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CAST PICK - 나의 예산으로, 가장 만족스러운 캐스팅을</title>
+  <title>CAST PICK - 가장 만족스러운 캐스팅 조합 탐색기</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -57,7 +57,7 @@
       border-bottom: 1px solid var(--border);
       padding-bottom: 10px;
     }
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
     input[type="text"], input[type="number"], select {
       width: 100%;
@@ -154,7 +154,7 @@
   <header>
     <div>
       <h1>🎭 CAST PICK</h1>
-      <p>나의 예산으로, 가장 만족스러운 캐스팅을.</p>
+      <p>정해진 관극 횟수 안에서, 가장 만족스러운 캐스팅 조합을.</p>
     </div>
     <div class="header-actions">
       <button class="secondary" onclick="resetToSample()">샘플 데이터 초기화</button>
@@ -168,10 +168,6 @@
       <div>
         <label>작품명</label>
         <input type="text" id="showTitle" value="이끼숲" onchange="saveState()" />
-      </div>
-      <div>
-        <label>총 예산 (원)</label>
-        <input type="number" id="budget" value="250000" step="10000" onchange="saveState()" />
       </div>
       <div>
         <label>목표 관극 횟수 (회)</label>
@@ -220,7 +216,7 @@
       <span>4. 공연 회차 및 캐스팅 스케줄</span>
       <span style="font-size:0.85rem; color:var(--muted); font-weight:normal;" id="showCountLabel"></span>
     </h2>
-    <div class="form-row" style="grid-template-columns: 120px 1fr 130px auto;">
+    <div class="form-row" style="grid-template-columns: 140px 1fr auto;">
       <div>
         <label>날짜</label>
         <input type="text" id="newShowDate" placeholder="11/25" />
@@ -228,10 +224,6 @@
       <div>
         <label>출연 배우 (쉼표로 구분)</label>
         <input type="text" id="newShowCast" placeholder="A, B" />
-      </div>
-      <div>
-        <label>티켓 가격 (원)</label>
-        <input type="number" id="newShowPrice" value="85000" step="5000" />
       </div>
       <div style="display:flex; align-items:flex-end;">
         <button onclick="addShow()" style="width:100%;">+ 회차 등록</button>
@@ -244,7 +236,6 @@
           <tr>
             <th>날짜</th>
             <th>캐스팅</th>
-            <th>티켓 가격</th>
             <th>기본 회차 점수</th>
             <th>관리</th>
           </tr>
@@ -265,14 +256,14 @@
         <div id="topCombinations"></div>
       </div>
 
-      <!-- 예산 민감도 분석 그래프 -->
+      <!-- 관극 횟수 변화 민감도 분석 그래프 -->
       <div class="card">
-        <h2>📈 예산 변화에 따른 최대 만족도 추이</h2>
+        <h2>📈 관극 횟수별 최대 만족도 추이</h2>
         <div class="chart-box">
-          <canvas id="budgetChart"></canvas>
+          <canvas id="countChart"></canvas>
         </div>
         <p style="font-size:0.85rem; color:var(--muted); margin-top:10px;">
-          현재 설정된 예산 전후로 ±10만 원 구간에서 달성 가능한 최대 만족도를 시뮬레이션합니다.
+          관극 횟수를 1회부터 최대 6회까지 늘렸을 때 달성 가능한 최대 만족도 변화를 보여줍니다.
         </p>
       </div>
     </div>
@@ -285,7 +276,6 @@
           <tr>
             <th>알고리즘</th>
             <th>최종 만족도</th>
-            <th>총 관극 비용</th>
             <th>탐색/연산 횟수</th>
             <th>실행 시간</th>
             <th>비고 (특징)</th>
@@ -298,11 +288,10 @@
 </div>
 
 <script>
-  const STORAGE_KEY = "cast_pick_state_v1";
+  const STORAGE_KEY = "cast_pick_no_budget_v1";
 
   const defaultState = {
     title: "이끼숲",
-    budget: 250000,
     targetCount: 3,
     repPenalty: 3,
     requiredActor: "",
@@ -313,16 +302,16 @@
       { actors: ["B", "D"], bonus: 3 }
     ],
     shows: [
-      { id: 1, date: "11/15", cast: ["A", "C"], price: 80000 },
-      { id: 2, date: "11/16", cast: ["B", "D"], price: 70000 },
-      { id: 3, date: "11/17", cast: ["A", "B"], price: 95000 },
-      { id: 4, date: "11/18", cast: ["C", "D"], price: 75000 },
-      { id: 5, date: "11/19", cast: ["A", "D"], price: 80000 },
-      { id: 6, date: "11/20", cast: ["B", "C"], price: 85000 },
-      { id: 7, date: "11/21", cast: ["A", "B"], price: 90000 },
-      { id: 8, date: "11/22", cast: ["A", "C"], price: 85000 },
-      { id: 9, date: "11/23", cast: ["B", "D"], price: 70000 },
-      { id: 10, date: "11/24", cast: ["A", "B"], price: 100000 }
+      { id: 1, date: "11/15", cast: ["A", "C"] },
+      { id: 2, date: "11/16", cast: ["B", "D"] },
+      { id: 3, date: "11/17", cast: ["A", "B"] },
+      { id: 4, date: "11/18", cast: ["C", "D"] },
+      { id: 5, date: "11/19", cast: ["A", "D"] },
+      { id: 6, date: "11/20", cast: ["B", "C"] },
+      { id: 7, date: "11/21", cast: ["A", "B"] },
+      { id: 8, date: "11/22", cast: ["A", "C"] },
+      { id: 9, date: "11/23", cast: ["B", "D"] },
+      { id: 10, date: "11/24", cast: ["A", "B"] }
     ]
   };
 
@@ -331,7 +320,6 @@
 
   function saveState() {
     state.title = document.getElementById("showTitle").value;
-    state.budget = Number(document.getElementById("budget").value);
     state.targetCount = Number(document.getElementById("targetCount").value);
     state.repPenalty = Number(document.getElementById("repPenalty").value);
     state.requiredActor = document.getElementById("requiredActor").value;
@@ -361,13 +349,11 @@
 
   function renderAll() {
     document.getElementById("showTitle").value = state.title;
-    document.getElementById("budget").value = state.budget;
     document.getElementById("targetCount").value = state.targetCount;
     document.getElementById("repPenalty").value = state.repPenalty;
 
     const actorNames = Object.keys(state.actors);
 
-    // 필수 배우 및 조합 셀렉트 박스 갱신
     const reqSelect = document.getElementById("requiredActor");
     const p1Select = document.getElementById("pairActor1");
     const p2Select = document.getElementById("pairActor2");
@@ -377,7 +363,6 @@
     p1Select.innerHTML = actorNames.map(a => `<option value="${a}">${a}</option>`).join("");
     p2Select.innerHTML = actorNames.map((a, idx) => `<option value="${a}" ${idx === 1 ? "selected" : ""}>${a}</option>`).join("");
 
-    // 배우 리스트 렌더링
     const actorList = document.getElementById("actorList");
     actorList.innerHTML = actorNames.map(name => `
       <div class="actor-item">
@@ -389,7 +374,6 @@
       </div>
     `).join("");
 
-    // 조합 가산점 리스트 렌더링
     const pairList = document.getElementById("pairList");
     pairList.innerHTML = state.pairBonuses.map((pb, idx) => `
       <span class="tag">
@@ -398,14 +382,16 @@
       </span>
     `).join("");
 
-    // 회차 테이블 렌더링
+    renderShowTable();
+  }
+
+  function renderShowTable() {
     document.getElementById("showCountLabel").textContent = `총 ${state.shows.length}회차 등록됨`;
     const tbody = document.getElementById("showTableBody");
     tbody.innerHTML = state.shows.map(s => `
       <tr>
         <td><strong>${s.date}</strong></td>
         <td>${s.cast.join(" + ")}</td>
-        <td>${s.price.toLocaleString()}원</td>
         <td><strong>${calcSingleShowScore(s)}점</strong></td>
         <td><button class="danger" onclick="removeShow(${s.id})">삭제</button></td>
       </tr>
@@ -416,17 +402,7 @@
     state.actors[name] = Number(val);
     document.getElementById(`score_${name}`).textContent = `${val}점`;
     saveState();
-    // 테이블 기본 점수만 갱신
-    const tbody = document.getElementById("showTableBody");
-    tbody.innerHTML = state.shows.map(s => `
-      <tr>
-        <td><strong>${s.date}</strong></td>
-        <td>${s.cast.join(" + ")}</td>
-        <td>${s.price.toLocaleString()}원</td>
-        <td><strong>${calcSingleShowScore(s)}점</strong></td>
-        <td><button class="danger" onclick="removeShow(${s.id})">삭제</button></td>
-      </tr>
-    `).join("");
+    renderShowTable();
   }
 
   function addActor() {
@@ -468,7 +444,6 @@
   function addShow() {
     const date = document.getElementById("newShowDate").value.trim() || "미정";
     const castRaw = document.getElementById("newShowCast").value.trim();
-    const price = Number(document.getElementById("newShowPrice").value);
     if (!castRaw) return alert("출연 배우를 입력해주세요.");
 
     const cast = castRaw.split(",").map(s => s.trim()).filter(Boolean);
@@ -477,7 +452,7 @@
     });
 
     const newId = state.shows.length ? Math.max(...state.shows.map(s => s.id)) + 1 : 1;
-    state.shows.push({ id: newId, date, cast, price });
+    state.shows.push({ id: newId, date, cast });
     document.getElementById("newShowDate").value = "";
     document.getElementById("newShowCast").value = "";
     saveState();
@@ -524,39 +499,36 @@
   // ==========================================
   // 1. 백트래킹 (가지치기 적용, 페널티/필수조건 완벽 반영)
   // ==========================================
-  function solveBacktracking(shows, budget, k, reqActor, repPenalty) {
+  function solveBacktracking(shows, k, reqActor, repPenalty) {
     const t0 = performance.now();
     let ops = 0;
     const validResults = [];
 
-    function dfs(idx, chosen, cost) {
+    function dfs(idx, chosen) {
       ops++;
-      if (cost > budget) return; // 예산 초과 가지치기
       if (chosen.length === k) {
         const evalRes = evaluateCombination(chosen, reqActor, repPenalty);
         if (evalRes.valid) {
           validResults.push({
             comb: [...chosen],
-            cost,
             score: evalRes.finalScore,
             penalty: evalRes.penalty
           });
         }
         return;
       }
+      // 남은 회차 수가 부족하면 조기 종료 (가지치기)
       if (idx >= shows.length || chosen.length + (shows.length - idx) < k) return;
 
-      // 현재 회차 선택
       chosen.push(shows[idx]);
-      dfs(idx + 1, chosen, cost + shows[idx].price);
+      dfs(idx + 1, chosen);
       chosen.pop();
 
-      // 현재 회차 미선택
-      dfs(idx + 1, chosen, cost);
+      dfs(idx + 1, chosen);
     }
 
-    dfs(0, [], 0);
-    validResults.sort((a, b) => b.score - a.score || a.cost - b.cost);
+    dfs(0, []);
+    validResults.sort((a, b) => b.score - a.score);
     const ms = (performance.now() - t0).toFixed(3);
     return { results: validResults, ops, ms };
   }
@@ -564,7 +536,7 @@
   // ==========================================
   // 2. 완전탐색 (가지치기 없는 순수 모든 조합 탐색)
   // ==========================================
-  function solveBruteForce(shows, budget, k, reqActor, repPenalty) {
+  function solveBruteForce(shows, k, reqActor, repPenalty) {
     const t0 = performance.now();
     let ops = 0;
     let best = null;
@@ -572,12 +544,9 @@
     function combGen(idx, chosen) {
       if (chosen.length === k) {
         ops++;
-        const cost = chosen.reduce((acc, s) => acc + s.price, 0);
-        if (cost <= budget) {
-          const evalRes = evaluateCombination(chosen, reqActor, repPenalty);
-          if (evalRes.valid && (!best || evalRes.finalScore > best.score)) {
-            best = { comb: [...chosen], cost, score: evalRes.finalScore };
-          }
+        const evalRes = evaluateCombination(chosen, reqActor, repPenalty);
+        if (evalRes.valid && (!best || evalRes.finalScore > best.score)) {
+          best = { comb: [...chosen], score: evalRes.finalScore };
         }
         return;
       }
@@ -594,46 +563,34 @@
   }
 
   // ==========================================
-  // 3. 동적 계획법 (DP - 회차 독립 가정, 1,000원 단위 압축)
+  // 3. 동적 계획법 (DP - 회차 독립 가정, 횟수 k 기준 최적화)
   // ==========================================
-  function solveDP(shows, budget, k, reqActor, repPenalty) {
+  function solveDP(shows, k, reqActor, repPenalty) {
     const t0 = performance.now();
-    const unit = 1000;
-    const maxB = Math.floor(budget / unit);
     let ops = 0;
 
-    // dp[count][b] = { score, comb }
-    const dp = Array.from({ length: k + 1 }, () => Array(maxB + 1).fill(null));
-    dp[0][0] = { score: 0, comb: [] };
+    // dp[c] = c회 선택 시 독립 점수 합 최대 조합
+    const dp = Array(k + 1).fill(null);
+    dp[0] = { score: 0, comb: [] };
 
     for (const s of shows) {
-      const cost = Math.floor(s.price / unit);
       const sScore = calcSingleShowScore(s);
       for (let c = k; c >= 1; c--) {
-        for (let b = maxB; b >= cost; b--) {
-          ops++;
-          const prev = dp[c - 1][b - cost];
-          if (prev) {
-            const newScore = prev.score + sScore;
-            if (!dp[c][b] || newScore > dp[c][b].score) {
-              dp[c][b] = { score: newScore, comb: [...prev.comb, s] };
-            }
+        ops++;
+        if (dp[c - 1]) {
+          const newScore = dp[c - 1].score + sScore;
+          if (!dp[c] || newScore > dp[c].score) {
+            dp[c] = { score: newScore, comb: [...dp[c - 1].comb, s] };
           }
         }
       }
     }
 
     let best = null;
-    for (let b = 0; b <= maxB; b++) {
-      if (dp[k][b]) {
-        const evalRes = evaluateCombination(dp[k][b].comb, reqActor, repPenalty);
-        if (evalRes.valid && (!best || evalRes.finalScore > best.score)) {
-          best = {
-            comb: dp[k][b].comb,
-            cost: dp[k][b].comb.reduce((acc, x) => acc + x.price, 0),
-            score: evalRes.finalScore
-          };
-        }
+    if (dp[k]) {
+      const evalRes = evaluateCombination(dp[k].comb, reqActor, repPenalty);
+      if (evalRes.valid) {
+        best = { comb: dp[k].comb, score: evalRes.finalScore };
       }
     }
     const ms = (performance.now() - t0).toFixed(3);
@@ -641,31 +598,24 @@
   }
 
   // ==========================================
-  // 4. 그리디 (가성비 점수/가격 내림차순 탐욕 선택)
+  // 4. 그리디 (단일 회차 기본 점수 내림차순 탐욕 선택)
   // ==========================================
-  function solveGreedy(shows, budget, k, reqActor, repPenalty) {
+  function solveGreedy(shows, k, reqActor, repPenalty) {
     const t0 = performance.now();
     let ops = 0;
     const sorted = [...shows].sort((a, b) => {
       ops++;
-      return (calcSingleShowScore(b) / b.price) - (calcSingleShowScore(a) / a.price);
+      return calcSingleShowScore(b) - calcSingleShowScore(a);
     });
 
-    const chosen = [];
-    let cost = 0;
-    for (const s of sorted) {
-      ops++;
-      if (chosen.length < k && cost + s.price <= budget) {
-        chosen.push(s);
-        cost += s.price;
-      }
-    }
+    const chosen = sorted.slice(0, k);
+    ops += chosen.length;
 
     let best = null;
     if (chosen.length === k) {
       const evalRes = evaluateCombination(chosen, reqActor, repPenalty);
       if (evalRes.valid) {
-        best = { comb: chosen, cost, score: evalRes.finalScore };
+        best = { comb: chosen, score: evalRes.finalScore };
       }
     }
     const ms = (performance.now() - t0).toFixed(3);
@@ -677,19 +627,19 @@
   // ==========================================
   function runAllAlgorithms() {
     saveState();
-    const { shows, budget, targetCount, requiredActor, repPenalty } = state;
+    const { shows, targetCount, requiredActor, repPenalty } = state;
 
-    const bt = solveBacktracking(shows, budget, targetCount, requiredActor, repPenalty);
-    const bf = solveBruteForce(shows, budget, targetCount, requiredActor, repPenalty);
-    const dp = solveDP(shows, budget, targetCount, requiredActor, repPenalty);
-    const gr = solveGreedy(shows, budget, targetCount, requiredActor, repPenalty);
+    const bt = solveBacktracking(shows, targetCount, requiredActor, repPenalty);
+    const bf = solveBruteForce(shows, targetCount, requiredActor, repPenalty);
+    const dp = solveDP(shows, targetCount, requiredActor, repPenalty);
+    const gr = solveGreedy(shows, targetCount, requiredActor, repPenalty);
 
     document.getElementById("resultsSection").style.display = "block";
 
     // TOP 3 렌더링
     const topContainer = document.getElementById("topCombinations");
     if (bt.results.length === 0) {
-      topContainer.innerHTML = `<p style="color:var(--danger); font-weight:600;">조건(예산·횟수·필수배우)을 만족하는 조합이 없습니다.</p>`;
+      topContainer.innerHTML = `<p style="color:var(--danger); font-weight:600;">조건(관극 횟수·필수배우)을 만족하는 조합이 없습니다.</p>`;
     } else {
       topContainer.innerHTML = bt.results.slice(0, 3).map((item, i) => `
         <div class="rank-card ${i === 0 ? "top1" : ""}">
@@ -700,12 +650,8 @@
               <span style="font-size:0.85rem; color:var(--muted);"> (중복감점 -${item.penalty}점)</span>
             </span>
           </div>
-          <div style="font-size:0.9rem; margin-bottom:8px;">
-            총 비용: <strong>${item.cost.toLocaleString()}원</strong>
-            (남은 예산: ${(budget - item.cost).toLocaleString()}원)
-          </div>
           <div>
-            ${item.comb.map(s => `<span class="show-pill"><strong>${s.date}</strong> · ${s.cast.join("+")} (${s.price.toLocaleString()}원)</span>`).join("")}
+            ${item.comb.map(s => `<span class="show-pill"><strong>${s.date}</strong> · ${s.cast.join(" + ")} (${calcSingleShowScore(s)}점)</span>`).join("")}
           </div>
         </div>
       `).join("");
@@ -713,41 +659,40 @@
 
     // 알고리즘 비교 표 렌더링
     const rows = [
-      { name: "백트래킹 (가지치기)", data: bt.results[0], ops: bt.ops, ms: bt.ms, note: "중복 페널티 및 제약조건 100% 반영 최적해" },
+      { name: "백트래킹 (가지치기)", data: bt.results[0], ops: bt.ops, ms: bt.ms, note: "중복 페널티 및 필수 배우 제약 100% 반영 최적해" },
       { name: "완전탐색 (Brute Force)", data: bf.best, ops: bf.ops, ms: bf.ms, note: "모든 조합 전수 조사 (기준 정답)" },
-      { name: "동적 계획법 (DP)", data: dp.best, ops: dp.ops, ms: dp.ms, note: "회차 독립 가정 최적화 (중복 페널티 시 오차 가능)" },
-      { name: "그리디 (가성비순)", data: gr.best, ops: gr.ops, ms: gr.ms, note: "가장 빠르나 예산·횟수 제약에서 최적해 놓칠 수 있음" }
+      { name: "동적 계획법 (DP)", data: dp.best, ops: dp.ops, ms: dp.ms, note: "회차 독립 가정 최적화 (중복 페널티·필수 조건 시 오차)" },
+      { name: "그리디 (고득점순)", data: gr.best, ops: gr.ops, ms: gr.ms, note: "단순 고득점 회차 선택 (중복 감점 고려 불가)" }
     ];
 
     document.getElementById("algoCompareBody").innerHTML = rows.map(r => `
       <tr>
         <td><strong>${r.name}</strong></td>
         <td>${r.data ? `<strong>${r.data.score}점</strong>` : "해 없음"}</td>
-        <td>${r.data ? `${r.data.cost.toLocaleString()}원` : "-"}</td>
         <td>${r.ops.toLocaleString()}회</td>
         <td>${r.ms} ms</td>
         <td style="font-size:0.82rem; color:var(--muted);">${r.note}</td>
       </tr>
     `).join("");
 
-    renderBudgetChart();
+    renderCountChart();
     document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth" });
   }
 
-  // 예산 변화 민감도 분석 차트
-  function renderBudgetChart() {
-    const { shows, budget, targetCount, requiredActor, repPenalty } = state;
+  // 관극 횟수 변화 민감도 분석 차트
+  function renderCountChart() {
+    const { shows, requiredActor, repPenalty } = state;
+    const maxK = Math.min(6, shows.length);
     const labels = [];
     const scores = [];
 
-    for (let delta = -100000; delta <= 100000; delta += 25000) {
-      const testBudget = Math.max(0, budget + delta);
-      labels.push(`${(testBudget / 10000).toFixed(1)}만`);
-      const res = solveBacktracking(shows, testBudget, targetCount, requiredActor, repPenalty);
+    for (let k = 1; k <= maxK; k++) {
+      labels.push(`${k}회 관극`);
+      const res = solveBacktracking(shows, k, requiredActor, repPenalty);
       scores.push(res.results.length ? res.results[0].score : 0);
     }
 
-    const ctx = document.getElementById("budgetChart").getContext("2d");
+    const ctx = document.getElementById("countChart").getContext("2d");
     if (chartInstance) chartInstance.destroy();
 
     chartInstance = new Chart(ctx, {
